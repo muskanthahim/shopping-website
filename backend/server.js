@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import swaggerUi from 'swagger-ui-express';
 
 import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
@@ -13,13 +14,14 @@ import wishlistRoutes from './routes/wishlist.js';
 import orderRoutes from './routes/orders.js';
 import healthRoutes from './routes/health.js';
 import initDatabase from './scripts/initDb.js';
+import { swaggerSpec } from './config/swagger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // CORS setup
 app.use(cors({
@@ -29,6 +31,10 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve Interactive API Docs (PHP Scramble / Swagger UI equivalent)
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Register API Routes
 app.use('/api/health', healthRoutes);
@@ -54,6 +60,7 @@ app.listen(PORT, async () => {
   console.log(`=================================================`);
   console.log(`🚀 MUSKAN THE LABEL Backend API running on port ${PORT}`);
   console.log(`🔗 API Base: http://localhost:${PORT}/api`);
+  console.log(`📚 Interactive Testing Docs (Scramble UI): http://localhost:${PORT}/docs`);
   console.log(`=================================================`);
 
   // Attempt MySQL auto-init

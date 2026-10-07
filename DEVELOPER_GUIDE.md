@@ -4,6 +4,17 @@ This document provides a clean, comprehensive guide for starting, configuring, a
 
 ---
 
+## 📚 Interactive API Documentation & Testing (PHP Scramble Equivalent)
+
+An interactive visual API testing console (powered by Swagger UI / OpenAPI 3.0) is mounted directly on your Express server:
+
+* **Interactive API Testing Console**: **`http://localhost:5001/docs`**
+* **Alternative URL**: **`http://localhost:5001/api-docs`**
+
+You can test all endpoints, send JSON payloads, verify database responses, and test JWT authentication directly from your browser!
+
+---
+
 ## 🚀 Commands to Start the Platform
 
 ### 1. Start MySQL Database Service (macOS)
@@ -23,7 +34,8 @@ npm run db:init
 cd backend
 npm start
 ```
-*Runs at:* `http://localhost:5001/api`
+*Runs at:* `http://localhost:5001/api`  
+*API Testing Docs:* `http://localhost:5001/docs`
 
 ### 4. Start React Frontend Development Server
 ```bash
@@ -49,6 +61,9 @@ JWT_SECRET=muskan_the_label_super_secret_jwt_key_2026
 ---
 
 ## 🌐 Complete REST API Endpoint Reference
+
+### Interactive Testing
+- `GET /docs` — Interactive OpenAPI / Scramble testing console in your browser.
 
 ### Health Check
 - `GET /api/health` — Checks Express server connection to local MySQL instance.
@@ -88,27 +103,3 @@ JWT_SECRET=muskan_the_label_super_secret_jwt_key_2026
 - `POST /api/auth/register` — Create new customer account
 - `POST /api/auth/login` — Log in and receive JWT session token
 - `GET /api/auth/me` — Retrieve active user profile
-
----
-
-## 📁 Project Architecture & Sitemap
-
-```text
-ShoppingWebsite/
-├── DEVELOPER_GUIDE.md     # Developer Guide & API Reference (This File)
-├── README.md               # Overview & MySQL setup guide
-├── database/
-│   ├── schema.sql          # MySQL database schema (12 tables)
-│   └── seed.sql            # Seed dataset (20 products, categories, variants)
-├── backend/
-│   ├── server.js           # Express API server (Port 5001)
-│   ├── .env                # Database & JWT configuration
-│   ├── config/db.js        # mysql2 connection pool
-│   ├── controllers/        # REST API Controllers
-│   ├── routes/             # Express Routers
-│   └── scripts/initDb.js   # DB Initializer script
-└── src/                    # Frontend React App (Vite + Tailwind)
-    ├── components/         # Navbar, Footer, ProductCard, CartDrawer, Modals
-    ├── context/ShopContext # React state & REST API sync
-    └── pages/              # Home, Shop, ProductDetail, Wishlist, Checkout, OrderConfirmation
-```
