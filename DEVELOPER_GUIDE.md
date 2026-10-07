@@ -4,14 +4,33 @@ This document provides a clean, comprehensive guide for starting, configuring, a
 
 ---
 
+## 🛢️ Sequel Ace / Sequel Pro Connection Settings (macOS)
+
+To view and manage your MySQL tables (`muskan_the_label`) in **Sequel Ace**:
+
+1. Open **Sequel Ace** on your Mac.
+2. Select **Standard (TCP/IP)** connection type.
+3. Enter the following settings:
+
+| Field | Value |
+| :--- | :--- |
+| **Name / Label** | `Muskan The Label` |
+| **Host** | `127.0.0.1` |
+| **Username** | `root` |
+| **Password** | *(Leave blank — empty password)* |
+| **Database** | `muskan_the_label` |
+| **Port** | `3306` |
+
+*Click **Connect** to open your database tables.*
+
+---
+
 ## 📚 Interactive API Documentation & Testing (PHP Scramble Equivalent)
 
 An interactive visual API testing console (powered by Swagger UI / OpenAPI 3.0) is mounted directly on your Express server:
 
 * **Interactive API Testing Console**: **`http://localhost:5001/docs`**
 * **Alternative URL**: **`http://localhost:5001/api-docs`**
-
-You can test all endpoints, send JSON payloads, verify database responses, and test JWT authentication directly from your browser!
 
 ---
 
