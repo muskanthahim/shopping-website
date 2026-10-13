@@ -42,26 +42,38 @@ brew services start mysql
 ```
 *To stop MySQL service when finished:* `brew services stop mysql`
 
-### 2. Initialize or Re-seed MySQL Database
+### 2. Run Both Frontend and Backend Concurrently (Single Command)
+Make sure you are in the **project root directory** (`ShoppingWebsite/`, **not** inside `backend/`):
 ```bash
-cd backend
-npm run db:init
+# Ensure you are at the project root
+cd /Users/waqar/MuskanLearning/VibeCoding/ShoppingWebsite
+
+# Launch both servers
+npm run dev:all
+```
+* **Frontend**: `http://localhost:3000` (automatically proxies `/api` calls to the backend)
+* **Backend REST API**: `http://localhost:5001/api`
+* **Interactive API Testing Console (Scramble / Swagger)**: `http://localhost:5001/docs`
+
+---
+
+### Alternative: Run Separately in Two Terminals
+
+**Terminal 1 — Backend:**
+```bash
+npm run server:dev
+# or: cd backend && npm start
 ```
 
-### 3. Start Express REST API Backend
+**Terminal 2 — Frontend:**
 ```bash
-cd backend
-npm start
-```
-*Runs at:* `http://localhost:5001/api`  
-*API Testing Docs:* `http://localhost:5001/docs`
-
-### 4. Start React Frontend Development Server
-```bash
-# From root directory
 npm run dev
 ```
-*Runs at:* `http://localhost:3000`
+
+### Database Seeder (if you need to re-seed tables):
+```bash
+npm run db:init
+```
 
 ---
 
@@ -118,7 +130,17 @@ JWT_SECRET=muskan_the_label_super_secret_jwt_key_2026
 - `GET /api/orders` — List customer order history
 - `GET /api/orders/number/:orderNumber` — Get order summary by reference number
 
-### Authentication
-- `POST /api/auth/register` — Create new customer account
-- `POST /api/auth/login` — Log in and receive JWT session token
-- `GET /api/auth/me` — Retrieve active user profile
+### Authentication & Customers
+- `POST /api/auth/register` — Create new customer account with bcrypt hashing and JWT return
+- `POST /api/auth/login` — Log in with email & password, returns JWT session token
+- `GET /api/auth/me` — Retrieve active authenticated user profile (requires `Bearer <token>`)
+- `PUT /api/auth/profile` — Update customer name and phone (requires `Bearer <token>`)
+
+### Editorial Articles & Stories
+- `GET /api/articles` — Retrieve live editorial articles from MySQL
+- `GET /api/articles/:id` — Retrieve single article by ID
+
+### Default Seeded Customer Accounts
+- **Account 1**: `customer@muskanthelabel.com` / `password123` (Ayesha Khan)
+- **Account 2**: `muskanthaheem09@gmail.com` / `password123` (Muskan Thahim)
+*(You can also use the **"Create Account"** tab in the Account modal to register any new customer instantly)*

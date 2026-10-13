@@ -121,6 +121,9 @@ export const getProducts = async (req, res) => {
         hex: getColorHex(colorName)
       }));
 
+      // Derive mood for editorial category filtering
+      const mood = getProductMood(p.category_name, p.collection_name, p.price);
+
       return {
         id: `mtl-${String(p.id).padStart(3, '0')}`,
         rawId: p.id,
@@ -130,6 +133,7 @@ export const getProducts = async (req, res) => {
         salePrice: p.sale_price ? Number(p.sale_price) : null,
         category: p.category_name || 'Lawn',
         collection: p.collection_name || "Autumn Edit '26",
+        mood,
         description: p.description,
         fabric: p.fabric,
         sizes: pSizes.length > 0 ? pSizes : ['XS', 'S', 'M', 'L', 'XL'],
@@ -187,6 +191,7 @@ export const getProductById = async (req, res) => {
       salePrice: p.sale_price ? Number(p.sale_price) : null,
       category: p.category_name,
       collection: p.collection_name,
+      mood: getProductMood(p.category_name, p.collection_name, p.price),
       description: p.description,
       fabric: p.fabric,
       sizes: Array.from(new Set(variants.map(v => v.size))),
@@ -263,6 +268,21 @@ export const deleteProduct = async (req, res) => {
     res.status(500).json({ error: 'Failed to delete product.' });
   }
 };
+
+function getProductMood(categoryName, collectionName, price) {
+  const cat = (categoryName || '').toLowerCase();
+  const col = (collectionName || '').toLowerCase();
+  if (cat.includes('festive') || col.includes('royal') || col.includes('heritage')) {
+    return 'FESTIVE';
+  }
+  if (cat.includes('velvet') || Number(price) >= 14000) {
+    return 'STATEMENT';
+  }
+  if (cat.includes('essential') || cat.includes('kurta')) {
+    return 'ESSENTIALS';
+  }
+  return 'EVERYDAY';
+}
 
 function getColorHex(colorName) {
   const map = {

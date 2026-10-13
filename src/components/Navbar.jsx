@@ -9,6 +9,7 @@ export const Navbar = () => {
     navigateToWishlist,
     cartItemCount,
     wishlist,
+    user,
     setIsCartOpen,
     setIsSearchOpen,
     setIsAccountOpen
@@ -108,12 +109,18 @@ export const Navbar = () => {
 
             {/* Account */}
             <button
+              id="navbar-account-btn"
               onClick={() => setIsAccountOpen(true)}
-              className="hidden sm:block p-1.5 text-brand-charcoal/85 hover:text-brand-charcoal transition-colors"
-              title="Account"
+              className="p-1.5 text-brand-charcoal/85 hover:text-brand-charcoal transition-colors flex items-center space-x-1"
+              title={user ? `Signed in as ${user.name}` : "Account"}
               aria-label="Account details"
             >
               <User size={19} strokeWidth={1.5} />
+              {user && (
+                <span className="hidden md:inline text-[10px] uppercase tracking-wider font-medium text-brand-charcoal max-w-[80px] truncate">
+                  {user.name.split(' ')[0]}
+                </span>
+              )}
             </button>
 
             {/* Wishlist */}

@@ -21,10 +21,10 @@ INSERT INTO collections (id, name, description, image) VALUES
 (4, 'Daily Luxe', 'Effortless high-thread lawn and linen ensembles tailored for daily refinement.', 'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?q=80&w=1000&auto=format&fit=crop')
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
--- 3. Insert Sample User (Password: "password123", bcrypt hash: "$2b$10$wT8m9sH5nQ1uG7/X.8rB9eM4mR5Y1Y7/X.8rB9eM4mR5Y1Y7/X.8r")
+-- 3. Insert Sample User (Password: "password123")
 INSERT INTO users (id, name, email, password, phone) VALUES
-(1, 'Ayesha Khan', 'customer@muskanthelabel.com', '$2b$10$eD5vjV8Lq6U/Z5k1v0h0e.qO7rB9eM4mR5Y1Y7/X.8rB9eM4mR5Y1', '+92 300 1234567')
-ON DUPLICATE KEY UPDATE name=VALUES(name);
+(1, 'Ayesha Khan', 'customer@muskanthelabel.com', '$2a$10$IgaJ2V/5rfTlgVw0FrdazOvCUo1e5LY54.Ju8QzudP5I.aTcKBt6m', '+92 300 1234567')
+ON DUPLICATE KEY UPDATE name=VALUES(name), password=VALUES(password);
 
 -- 4. Insert 20 Products
 INSERT INTO products (id, name, slug, description, price, sale_price, category_id, collection_id, fabric, rating, review_count, stock_quantity, is_new, is_best_seller) VALUES
@@ -51,6 +51,7 @@ INSERT INTO products (id, name, slug, description, price, sale_price, category_i
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 -- 5. Insert Product Images
+DELETE FROM product_images;
 INSERT INTO product_images (product_id, image_url, is_primary) VALUES
 (1, "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=1000&auto=format&fit=crop", 1),
 (1, "https://images.unsplash.com/photo-1583391733975-47b2c589634e?q=80&w=1000&auto=format&fit=crop", 0),
@@ -86,6 +87,7 @@ INSERT INTO product_images (product_id, image_url, is_primary) VALUES
 (20, "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop", 1);
 
 -- 6. Insert Product Variants (Sizes & Colors)
+DELETE FROM product_variants;
 INSERT INTO product_variants (product_id, size, color, stock_quantity) VALUES
 (1, 'XS', 'Ivory', 10), (1, 'S', 'Ivory', 15), (1, 'M', 'Ivory', 12), (1, 'L', 'Ivory', 8), (1, 'XL', 'Ivory', 5),
 (2, 'S', 'Onyx Black', 10), (2, 'M', 'Onyx Black', 10), (2, 'L', 'Onyx Black', 10),
@@ -99,6 +101,7 @@ INSERT INTO product_variants (product_id, size, color, stock_quantity) VALUES
 (10, 'S', 'Garnet Crimson', 5), (10, 'M', 'Garnet Crimson', 5), (10, 'L', 'Garnet Crimson', 5);
 
 -- 7. Insert Sample Reviews
+DELETE FROM reviews;
 INSERT INTO reviews (user_id, product_id, rating, comment) VALUES
 (1, 1, 5, "Breathtaking quality lawn! The embroidery is subtle, feminine and very soft on the skin."),
 (1, 2, 5, "Noir Garden is an absolute head-turner. Wore it to a dinner and received so many compliments!"),

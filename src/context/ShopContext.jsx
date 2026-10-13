@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { PRODUCTS as FALLBACK_PRODUCTS } from '../data/products';
 
 const ShopContext = createContext();
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = '/api';
 
 export const ShopProvider = ({ children }) => {
   // Page view state: 'home' | 'shop' | 'product-detail' | 'wishlist' | 'checkout' | 'order-confirmation'
@@ -13,12 +12,18 @@ export const ShopProvider = ({ children }) => {
   const [filterMood, setFilterMood] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Products from Backend REST API
-  const [products, setProducts] = useState(FALLBACK_PRODUCTS);
+  // Live Data from Backend REST API
+  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [collections, setCollections] = useState([]);
+  const [articles, setArticles] = useState([]);
   const [isBackendConnected, setIsBackendConnected] = useState(false);
-  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+
+  // Authentication State
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('muskan_token') || null);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // Cart & Wishlist state
   const [cart, setCart] = useState(() => {
@@ -40,8 +45,6 @@ export const ShopProvider = ({ children }) => {
   });
 
   const [recentOrder, setRecentOrder] = useState(null);
-  const [user, setUser] = useState(null);
-  const [authToken, setAuthToken] = useState(() => localStorage.getItem('muskan_token') || null);
 
   // UI Overlays
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -59,6 +62,12 @@ export const ShopProvider = ({ children }) => {
     }, 3200);
   }, []);
 
+  // Helper for Authorization Headers
+  const getAuthHeaders = useCallback(() => {
+    const token = authToken || localStorage.getItem('muskan_token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, [authToken]);
+
   // 1. Fetch Products from Express + MySQL REST API
   const fetchProductsFromApi = useCallback(async () => {
     try {
@@ -66,34 +75,119 @@ export const ShopProvider = ({ children }) => {
       const res = await fetch(`${API_BASE_URL}/products`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setProducts(data);
           setIsBackendConnected(true);
         }
       }
     } catch (err) {
-      // Backend not running yet or starting up -> fallback gracefully
+      console.error('Failed to load products from API:', err);
       setIsBackendConnected(false);
     } finally {
       setLoadingProducts(false);
     }
   }, []);
 
-  // 2. Health check & Initial Data load
+  // 2. Fetch User Profile if Token Exists
+  const fetchCurrentUser = useCallback(async (token) => {
+    const activeToken = token || authToken || localStorage.getItem('muskan_token');
+    if (!activeToken) {
+      setUser(null);
+      setAuthLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${activeToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setUser(data.user);
+        }
+      } else {
+        // Invalid or expired token -> clear it
+        localStorage.removeItem('muskan_token');
+        setAuthToken(null);
+        setUser(null);
+      }
+    } catch (err) {
+      console.error('fetchCurrentUser error:', err);
+    } finally {
+      setAuthLoading(false);
+    }
+  }, [authToken]);
+
+  // 3. Fetch Cart from Backend
+  const fetchCartFromApi = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/cart`, {
+        headers: getAuthHeaders()
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.items)) {
+          setCart(data.items);
+        }
+      }
+    } catch (e) {
+      // Offline fallback
+    }
+  }, [getAuthHeaders]);
+
+  // 4. Fetch Wishlist from Backend
+  const fetchWishlistFromApi = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/wishlist`, {
+        headers: getAuthHeaders()
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.wishlist)) {
+          setWishlist(data.wishlist);
+        }
+      }
+    } catch (e) {
+      // Offline fallback
+    }
+  }, [getAuthHeaders]);
+
+  // 5. Initial Data Load & Authentication Verification
   useEffect(() => {
     fetchProductsFromApi();
 
-    // Fetch Categories & Collections
+    // Fetch Categories
     fetch(`${API_BASE_URL}/categories`)
       .then(r => r.ok ? r.json() : [])
-      .then(data => data.length && setCategories(data))
+      .then(data => {
+        if (Array.isArray(data)) setCategories(data);
+      })
       .catch(() => {});
 
+    // Fetch Collections
     fetch(`${API_BASE_URL}/collections`)
       .then(r => r.ok ? r.json() : [])
-      .then(data => data.length && setCollections(data))
+      .then(data => {
+        if (Array.isArray(data)) setCollections(data);
+      })
       .catch(() => {});
-  }, [fetchProductsFromApi]);
+
+    // Fetch Editorial Articles
+    fetch(`${API_BASE_URL}/articles`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if (Array.isArray(data)) setArticles(data);
+      })
+      .catch(() => {});
+
+    // Check user auth
+    fetchCurrentUser();
+
+    // Fetch Cart & Wishlist
+    fetchCartFromApi();
+    fetchWishlistFromApi();
+  }, [fetchProductsFromApi, fetchCurrentUser, fetchCartFromApi, fetchWishlistFromApi]);
 
   // Persist Local Backup
   useEffect(() => {
@@ -109,7 +203,10 @@ export const ShopProvider = ({ children }) => {
     try {
       const res = await fetch(`${API_BASE_URL}/cart`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({ productId: product.id, size, color, quantity })
       });
       if (res.ok) {
@@ -141,7 +238,7 @@ export const ShopProvider = ({ children }) => {
             name: product.name,
             price: product.salePrice || product.price,
             originalPrice: product.price,
-            image: product.images[0],
+            image: product.images && product.images[0] ? product.images[0] : '',
             size,
             color: selectedColor,
             quantity
@@ -159,7 +256,10 @@ export const ShopProvider = ({ children }) => {
     setCart((prev) => prev.filter((_, i) => i !== index));
     
     if (item && item.cartItemId) {
-      fetch(`${API_BASE_URL}/cart/${item.cartItemId}`, { method: 'DELETE' }).catch(() => {});
+      fetch(`${API_BASE_URL}/cart/${item.cartItemId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      }).catch(() => {});
     }
     showToast('Item removed from shopping bag');
   };
@@ -176,7 +276,10 @@ export const ShopProvider = ({ children }) => {
       if (updated[index].cartItemId) {
         fetch(`${API_BASE_URL}/cart/${updated[index].cartItemId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
           body: JSON.stringify({ quantity: newQty })
         }).catch(() => {});
       }
@@ -191,13 +294,19 @@ export const ShopProvider = ({ children }) => {
     
     if (isSaved) {
       setWishlist((prev) => prev.filter((id) => id !== productId));
-      fetch(`${API_BASE_URL}/wishlist/${productId}`, { method: 'DELETE' }).catch(() => {});
+      fetch(`${API_BASE_URL}/wishlist/${productId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      }).catch(() => {});
       if (product) showToast(`Removed "${product.name}" from wishlist`);
     } else {
       setWishlist((prev) => [...prev, productId]);
       fetch(`${API_BASE_URL}/wishlist`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({ productId })
       }).catch(() => {});
       if (product) showToast(`Saved "${product.name}" to wishlist`);
@@ -209,7 +318,10 @@ export const ShopProvider = ({ children }) => {
     try {
       const res = await fetch(`${API_BASE_URL}/orders`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify(orderPayload)
       });
       if (res.ok) {
@@ -223,8 +335,99 @@ export const ShopProvider = ({ children }) => {
         return { success: false, error: errData.error || 'Failed to place order.' };
       }
     } catch (err) {
-      // Local fallback execution if backend DB is reconnecting
       return { success: false, error: err.message };
+    }
+  };
+
+  // Auth: Login function
+  const login = async (email, password) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Invalid email or password.' };
+      }
+
+      localStorage.setItem('muskan_token', data.token);
+      setAuthToken(data.token);
+      setUser(data.user);
+
+      // Refresh cart, wishlist, and orders with newly authenticated user
+      setTimeout(() => {
+        fetchCartFromApi();
+        fetchWishlistFromApi();
+      }, 100);
+
+      showToast(`Welcome back, ${data.user.name}`);
+      return { success: true, user: data.user };
+    } catch (err) {
+      return { success: false, error: 'Could not connect to server. Please try again.' };
+    }
+  };
+
+  // Auth: Register function
+  const register = async (name, email, password, phone) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, phone })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Registration failed.' };
+      }
+
+      localStorage.setItem('muskan_token', data.token);
+      setAuthToken(data.token);
+      setUser(data.user);
+
+      showToast(`Account created. Welcome to Muskan The Label, ${data.user.name}`);
+      return { success: true, user: data.user };
+    } catch (err) {
+      return { success: false, error: 'Could not connect to server. Please try again.' };
+    }
+  };
+
+  // Auth: Logout function
+  const logout = () => {
+    localStorage.removeItem('muskan_token');
+    setAuthToken(null);
+    setUser(null);
+    setRecentOrder(null);
+    setCart([]);
+    setWishlist([]);
+    showToast('You have been signed out.');
+  };
+
+  // Auth: Update Profile function
+  const updateProfile = async (name, phone) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({ name, phone })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Failed to update profile.' };
+      }
+
+      setUser(data.user);
+      showToast('Your profile details have been updated.');
+      return { success: true, user: data.user };
+    } catch (err) {
+      return { success: false, error: 'Could not update profile.' };
     }
   };
 
@@ -270,6 +473,7 @@ export const ShopProvider = ({ children }) => {
         PRODUCTS: products,
         categories,
         collections,
+        articles,
         isBackendConnected,
         loadingProducts,
         currentView,
@@ -288,6 +492,12 @@ export const ShopProvider = ({ children }) => {
         setRecentOrder,
         user,
         setUser,
+        authToken,
+        authLoading,
+        login,
+        register,
+        logout,
+        updateProfile,
         isCartOpen,
         setIsCartOpen,
         isSearchOpen,

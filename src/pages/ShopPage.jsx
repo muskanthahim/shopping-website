@@ -1,17 +1,27 @@
 import React, { useState, useMemo } from 'react';
 import { useShop } from '../context/ShopContext';
 import { ProductCard } from '../components/ProductCard';
-import { CATEGORIES, COLLECTIONS } from '../data/products';
 import { Filter, X, ChevronDown, SlidersHorizontal } from 'lucide-react';
 
 export const ShopPage = () => {
   const {
     PRODUCTS,
+    categories,
+    collections,
+    loadingProducts,
     filterCategory,
     setFilterCategory,
     filterMood,
     setFilterMood
   } = useShop();
+
+  const categoryOptions = useMemo(() => {
+    return ['All', ...categories.map((c) => c.name)];
+  }, [categories]);
+
+  const collectionOptions = useMemo(() => {
+    return ['All Collections', ...collections.map((c) => c.name)];
+  }, [collections]);
 
   const [selectedCollection, setSelectedCollection] = useState('All Collections');
   const [selectedSize, setSelectedSize] = useState('All');
@@ -39,8 +49,12 @@ export const ShopPage = () => {
   const filteredProducts = useMemo(() => {
     return PRODUCTS.filter((product) => {
       // Category match
-      if (filterCategory !== 'All' && product.category !== filterCategory) {
-        return false;
+      if (filterCategory !== 'All') {
+        const pCat = (product.category || '').toLowerCase();
+        const fCat = filterCategory.toLowerCase();
+        if (pCat !== fCat && !pCat.startsWith(fCat) && !fCat.startsWith(pCat)) {
+          return false;
+        }
       }
       // Mood match
       if (filterMood !== 'All' && product.mood !== filterMood) {
@@ -176,7 +190,7 @@ export const ShopPage = () => {
           <div className="space-y-3">
             <h4 className="text-xs uppercase tracking-widest text-brand-taupe font-medium">Category</h4>
             <div className="space-y-1.5">
-              {CATEGORIES.map((cat) => (
+              {categoryOptions.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setFilterCategory(cat)}
@@ -196,7 +210,7 @@ export const ShopPage = () => {
           <div className="space-y-3 pt-4 border-t border-brand-taupeLight/20">
             <h4 className="text-xs uppercase tracking-widest text-brand-taupe font-medium">Collection</h4>
             <div className="space-y-1.5">
-              {COLLECTIONS.map((col) => (
+              {collectionOptions.map((col) => (
                 <button
                   key={col}
                   onClick={() => setSelectedCollection(col)}
@@ -343,7 +357,12 @@ export const ShopPage = () => {
           )}
 
           {/* Grid Layout */}
-          {filteredProducts.length === 0 ? (
+          {loadingProducts && PRODUCTS.length === 0 ? (
+            <div className="text-center py-24 space-y-4">
+              <div className="w-8 h-8 border-2 border-brand-charcoal border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-xs uppercase tracking-widest text-brand-taupe">Loading silhouettes...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center py-20 bg-brand-cream/40 border border-brand-taupeLight/30 space-y-3">
               <h3 className="font-serif text-2xl font-medium text-brand-charcoal">
                 No matching silhouettes found

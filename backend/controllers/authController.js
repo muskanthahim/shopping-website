@@ -92,3 +92,33 @@ export const getMe = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch user profile.' });
   }
 };
+
+export const updateProfile = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Not authenticated.' });
+    }
+
+    const { name, phone } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Name is required.' });
+    }
+
+    await pool.query('UPDATE users SET name = ?, phone = ? WHERE id = ?', [
+      name.trim(),
+      phone ? phone.trim() : null,
+      req.user.id
+    ]);
+
+    const [updated] = await pool.query(
+      'SELECT id, name, email, phone, created_at FROM users WHERE id = ?',
+      [req.user.id]
+    );
+
+    res.json({ message: 'Profile updated successfully', user: updated[0] });
+  } catch (error) {
+    console.error('updateProfile error:', error);
+    res.status(500).json({ error: 'Failed to update profile.' });
+  }
+};
+

@@ -18,11 +18,10 @@ export const getCart = async (req, res) => {
       `SELECT ci.id as cart_item_id, ci.quantity, ci.product_id,
               p.name, p.price, p.sale_price,
               pv.size, pv.color,
-              pi.image_url
+              (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, id ASC LIMIT 1) as image_url
        FROM cart_items ci
        JOIN products p ON ci.product_id = p.id
        LEFT JOIN product_variants pv ON ci.variant_id = pv.id
-       LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
        WHERE ci.cart_id = ?`,
       [cartId]
     );

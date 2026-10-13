@@ -6,6 +6,7 @@ export const CheckoutPage = () => {
   const {
     cart,
     cartTotal,
+    user,
     setRecentOrder,
     setCurrentView,
     navigateToHome,
@@ -14,18 +15,29 @@ export const CheckoutPage = () => {
     placeOrderApi
   } = useShop();
 
-  // Contact State
+  // Contact State dynamically populated with live user data if logged in
   const [formData, setFormData] = useState({
-    fullName: 'Ayesha Khan',
-    email: 'ayesha.khan@example.com',
-    phone: '+92 300 1234567',
-    address: 'House 42, Block 5, Clifton',
-    area: 'Clifton Sector 5',
+    fullName: user ? user.name : '',
+    email: user ? user.email : '',
+    phone: user ? (user.phone || '') : '',
+    address: '',
+    area: '',
     city: 'Karachi',
     province: 'Sindh',
-    postalCode: '75600',
+    postalCode: '',
     paymentMethod: 'Cash on Delivery' // 'Cash on Delivery' | 'Card' | 'Bank Transfer'
   });
+
+  React.useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || user.name || '',
+        email: prev.email || user.email || '',
+        phone: prev.phone || user.phone || ''
+      }));
+    }
+  }, [user]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [promoCode, setPromoCode] = useState('');

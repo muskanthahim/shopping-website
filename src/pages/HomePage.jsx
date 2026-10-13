@@ -1,11 +1,50 @@
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { ProductCard } from '../components/ProductCard';
-import { MOODS, ARTICLES, INSTAGRAM_POSTS } from '../data/products';
 import { ChevronLeft, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
 
+const EDITORIAL_MOODS = [
+  {
+    id: 'EVERYDAY',
+    title: 'EVERYDAY',
+    subtitle: 'Effortless pieces for every day.',
+    image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1000&auto=format&fit=crop',
+    count: '8 Silhouettes'
+  },
+  {
+    id: 'FESTIVE',
+    title: 'FESTIVE',
+    subtitle: 'For celebrations and special moments.',
+    image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=1000&auto=format&fit=crop',
+    count: '6 Silhouettes'
+  },
+  {
+    id: 'STATEMENT',
+    title: 'STATEMENT',
+    subtitle: 'For when you want to stand out.',
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop',
+    count: '5 Silhouettes'
+  },
+  {
+    id: 'ESSENTIALS',
+    title: 'ESSENTIALS',
+    subtitle: 'Timeless pieces that belong in every wardrobe.',
+    image: 'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?q=80&w=1000&auto=format&fit=crop',
+    count: '5 Silhouettes'
+  }
+];
+
+const INSTAGRAM_LOOKS = [
+  { id: 1, image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=600&auto=format&fit=crop', likes: '1.4k' },
+  { id: 2, image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600&auto=format&fit=crop', likes: '2.1k' },
+  { id: 3, image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=600&auto=format&fit=crop', likes: '980' },
+  { id: 4, image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=600&auto=format&fit=crop', likes: '3.2k' },
+  { id: 5, image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600&auto=format&fit=crop', likes: '1.8k' },
+  { id: 6, image: 'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?q=80&w=600&auto=format&fit=crop', likes: '2.5k' }
+];
+
 export const HomePage = () => {
-  const { PRODUCTS, navigateToShop, navigateToProduct, setActiveArticle, showToast } = useShop();
+  const { PRODUCTS, articles, navigateToShop, navigateToProduct, setActiveArticle, showToast } = useShop();
 
   // Carousel index for Best Sellers
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -111,21 +150,29 @@ export const HomePage = () => {
         </div>
 
         {/* Asymmetric Product Layout (1 featured large + 3 side items) */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          {/* Main Hero Product (Span 6) */}
-          <div className="md:col-span-6">
-            <ProductCard product={newInProducts[0]} priority={true} />
-          </div>
-          
-          {/* 3 Secondary Products (Span 6 in 2-col or stacked) */}
-          <div className="md:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <ProductCard product={newInProducts[1]} />
-            <ProductCard product={newInProducts[2]} />
-            <div className="sm:col-span-2 md:col-span-2">
-              <ProductCard product={newInProducts[3]} />
+        {newInProducts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            {/* Main Hero Product (Span 6) */}
+            <div className="md:col-span-6">
+              <ProductCard product={newInProducts[0]} priority={true} />
+            </div>
+            
+            {/* 3 Secondary Products (Span 6 in 2-col or stacked) */}
+            <div className="md:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-8">
+              {newInProducts[1] && <ProductCard product={newInProducts[1]} />}
+              {newInProducts[2] && <ProductCard product={newInProducts[2]} />}
+              {newInProducts[3] && (
+                <div className="sm:col-span-2 md:col-span-2">
+                  <ProductCard product={newInProducts[3]} />
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="text-center py-16 text-brand-taupe text-xs uppercase tracking-widest">
+            Loading silhouettes...
+          </div>
+        )}
       </section>
 
       {/* 3. SHOP BY MOOD */}
@@ -142,7 +189,7 @@ export const HomePage = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {MOODS.map((mood) => (
+            {EDITORIAL_MOODS.map((mood) => (
               <div
                 key={mood.id}
                 onClick={() => navigateToShop('All', mood.id)}
@@ -236,9 +283,15 @@ export const HomePage = () => {
 
         {/* Carousel Items Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {bestSellers.slice(carouselIndex, carouselIndex + 4).map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {bestSellers.length > 0 ? (
+            bestSellers.slice(carouselIndex, carouselIndex + 4).map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          ) : (
+            <div className="col-span-4 text-center py-10 text-xs uppercase tracking-widest text-brand-taupe">
+              Loading most coveted pieces...
+            </div>
+          )}
         </div>
       </section>
 
@@ -308,7 +361,7 @@ export const HomePage = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {ARTICLES.map((article) => (
+          {(articles && articles.length > 0 ? articles : []).map((article) => (
             <div
               key={article.id}
               onClick={() => setActiveArticle(article)}
@@ -368,7 +421,7 @@ export const HomePage = () => {
 
           {/* Grid of 6 fashion images */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {INSTAGRAM_POSTS.map((post) => (
+            {INSTAGRAM_LOOKS.map((post) => (
               <a
                 key={post.id}
                 href="https://instagram.com"

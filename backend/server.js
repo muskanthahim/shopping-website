@@ -13,6 +13,7 @@ import cartRoutes from './routes/cart.js';
 import wishlistRoutes from './routes/wishlist.js';
 import orderRoutes from './routes/orders.js';
 import healthRoutes from './routes/health.js';
+import articleRoutes from './routes/articles.js';
 import initDatabase from './scripts/initDb.js';
 import { swaggerSpec } from './config/swagger.js';
 
@@ -42,6 +43,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/collections', collectionRoutes);
+app.use('/api/articles', articleRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/orders', orderRoutes);

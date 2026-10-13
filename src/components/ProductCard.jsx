@@ -13,8 +13,10 @@ export const ProductCard = ({ product, priority = false }) => {
 
   const [isHovered, setIsHovered] = useState(false);
 
-  const isSavedInWishlist = wishlist.includes(product.id);
-  const secondaryImage = product.images[1] || product.images[0];
+  if (!product) return null;
+
+  const isSavedInWishlist = wishlist && product.id ? wishlist.includes(product.id) : false;
+  const secondaryImage = (product.images && (product.images[1] || product.images[0])) || '';
 
   return (
     <div

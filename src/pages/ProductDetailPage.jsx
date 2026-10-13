@@ -17,8 +17,17 @@ export const ProductDetailPage = () => {
 
   const product = PRODUCTS.find((p) => p.id === selectedProductId) || PRODUCTS[0];
 
+  if (!product) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-24 text-center space-y-4">
+        <div className="w-8 h-8 border-2 border-brand-charcoal border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-xs uppercase tracking-widest text-brand-taupe">Loading silhouette details...</p>
+      </div>
+    );
+  }
+
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(product.sizes[1] || product.sizes[0]);
+  const [selectedSize, setSelectedSize] = useState((product.sizes && (product.sizes[1] || product.sizes[0])) || 'M');
   const [selectedColor, setSelectedColor] = useState(
     product.colors && product.colors[0] ? product.colors[0].name : 'Standard'
   );

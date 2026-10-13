@@ -89,6 +89,8 @@ export const createOrder = async (req, res) => {
       validatedOrderItems.push({
         productId: product.id,
         productName: product.name,
+        name: product.name,
+        image: item.image || 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=1000&auto=format&fit=crop',
         price: unitPrice,
         size: item.size || 'M',
         color: item.color || 'Standard',
@@ -162,10 +164,13 @@ export const createOrder = async (req, res) => {
       message: 'Order placed successfully',
       orderNumber,
       orderId,
+      date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      paymentMethod,
       total: finalTotal,
       subtotal,
       discount,
       shippingFee,
+      shipping: shippingFee,
       items: validatedOrderItems,
       customerName,
       shippingAddress: `${shippingAddress}, ${city}, ${province}`
@@ -181,15 +186,34 @@ export const createOrder = async (req, res) => {
 
 export const getOrders = async (req, res) => {
   try {
-    const userId = req.user ? req.user.id : 1;
+    const userId = req.user ? req.user.id : (req.query.userId || 1);
 
     const [orders] = await pool.query(
       'SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC',
       [userId]
     );
 
-    res.json(orders);
+    const orderIds = orders.map(o => o.id);
+    let itemsByOrder = {};
+    if (orderIds.length > 0) {
+      const [items] = await pool.query(
+        'SELECT * FROM order_items WHERE order_id IN (?)',
+        [orderIds]
+      );
+      items.forEach(item => {
+        if (!itemsByOrder[item.order_id]) itemsByOrder[item.order_id] = [];
+        itemsByOrder[item.order_id].push(item);
+      });
+    }
+
+    const ordersWithItems = orders.map(o => ({
+      ...o,
+      items: itemsByOrder[o.id] || []
+    }));
+
+    res.json(ordersWithItems);
   } catch (error) {
+    console.error('getOrders error:', error);
     res.status(500).json({ error: 'Failed to fetch order history.' });
   }
 };
